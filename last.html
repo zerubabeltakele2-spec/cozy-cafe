@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="am" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cozy Café - Digital Menu & Review System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Abyssinica+SIL&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cafe: {
+                            50: '#fdfbf7',
+                            100: '#f7f1e5',
+                            500: '#d35400',
+                            600: '#e67e22',
+                            800: '#2c3e50',
+                            900: '#1a252f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary-color: #d35400;
+            --secondary-color: #2c3e50;
+            --accent-color: #f39c12;
+            --bg-color: #fdfbf7;
+        }
+
+        body {
+            font-family: 'Poppins', 'Abyssinica SIL', sans-serif;
+            background-color: var(--bg-color);
+        }
+
+        .hero-header {
+            background: linear-gradient(rgba(44, 62, 80, 0.85), rgba(44, 62, 80, 0.85)), 
+                        url('https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat;
+        }
+
+        .modal-animate {
+            animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#fdfbf7] dark:bg-zinc-950 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+
+    <!-- Header / Navbar -->
+    <header class="hero-header text-white shadow-lg relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                
+                <div class="text-center md:text-left cursor-pointer select-none group" onclick="handleSecretClick()" title="Cozy Café">
+                    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-wide flex items-center justify-center md:justify-start gap-3">
+                        <i class="fa-solid fa-mug-hot text-[#f39c12] group-hover:rotate-12 transition-transform duration-300"></i>
+                        <span id="brandTitle">Cozy Café Menu</span>
+                    </h1>
+                    <p id="brandSubtitle" class="text-sm sm:text-base text-gray-200 mt-1">ምርጥና ትኩስ የምግብና የመጠጥ አማራጮች</p>
+                </div>
+
+                <!-- Top Language & Theme Controls -->
+                <div class="flex items-center space-x-3 flex-wrap justify-center">
+                    <!-- Language Switcher -->
+                    <button onclick="toggleLanguage()" class="px-4 py-2 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs font-semibold transition flex items-center gap-2 border border-white/30">
+                        <i class="fa-solid fa-globe text-[#f39c12]"></i>
+                        <span id="langBtnLabel">English</span>
+                    </button>
+
+                    <!-- Dark/Light Theme Switcher -->
+                    <button onclick="toggleTheme()" class="p-2.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white transition border border-white/30" title="Toggle Theme">
+                        <i class="fa-solid fa-moon dark:hidden"></i>
+                        <i class="fa-solid fa-sun hidden dark:block text-[#f39c12]"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Search & Filter Bar -->
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-4 mb-8">
+            <div class="relative w-full lg:w-80">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="searchInput" oninput="handleSearch()" placeholder="ምግብ ወይም መጠጥ ይፈልጉ..." class="w-full pl-10 pr-4 py-2.5 rounded-full border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#d35400] shadow-sm transition">
+            </div>
+
+            <!-- Categories Bar -->
+            <div id="categoryContainer" class="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 scrollbar-none">
+                <button onclick="filterCategory('all')" class="cat-btn active border border-[#d35400] bg-[#d35400] text-white px-4 py-2 rounded-full text-xs font-semibold transition whitespace-nowrap shadow-sm" data-cat="all">ሁሉንም (All)</button>
+                <button onclick="filterCategory('special')" class="cat-btn border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-[#2c3e50] dark:text-gray-200 px-4 py-2 rounded-full text-xs font-semibold transition whitespace-nowrap shadow-sm" data-cat="special">⭐ Special Foods</button>
+                <button onclick="filterCategory('meals')" class="cat-btn border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-[#2c3e50] dark:text-gray-200 px-4 py-2 rounded-full text-xs font-semibold transition whitespace-nowrap shadow-sm" data-cat="meals">ምግቦች (Meals)</button>
+                <button onclick="filterCategory('hot-drinks')" class="cat-btn border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-[#2c3e50] dark:text-gray-200 px-4 py-2 rounded-full text-xs font-semibold transition whitespace-nowrap shadow-sm" data-cat="hot-drinks">ትኩስ መጠጦች</button>
+                <button onclick="filterCategory('cold-drinks')" class="cat-btn border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-[#2c3e50] dark:text-gray-200 px-4 py-2 rounded-full text-xs font-semibold transition whitespace-nowrap shadow-sm" data-cat="cold-drinks">ቀዝቃዛ መጠጦች</button>
+                <button onclick="filterCategory('desserts')" class="cat-btn border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-[#2c3e50] dark:text-gray-200 px-4 py-2 rounded-full text-xs font-semibold transition whitespace-nowrap shadow-sm" data-cat="desserts">መጣፍጦች (Desserts)</button>
+            </div>
+        </div>
+
+        <!-- Admin Active Controls Banner -->
+        <div id="adminBanner" class="hidden mb-8 bg-[#2c3e50] text-white p-5 rounded-2xl shadow-xl border-l-8 border-[#f39c12] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+                <span class="bg-[#f39c12] text-xs font-bold uppercase px-2.5 py-1 rounded-md text-zinc-900 tracking-wider">Admin Unlocked</span>
+                <h3 class="text-base font-bold mt-1 text-white">የአስተዳዳሪ ሁኔታ ነቅቷል (Admin Mode Active)</h3>
+                <p class="text-xs text-gray-300">አዲስ ምግቦችን መጨመር፣ ማስተካከል ወይም መሰረዝ ይችላሉ።</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="openAddItemModal()" class="px-4 py-2 bg-[#d35400] hover:bg-[#e67e22] text-white rounded-xl text-xs font-semibold shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> አዲስ ምግብ አክል
+                </button>
+                <button onclick="openChangePasscodeModal()" class="px-3.5 py-2 bg-[#f39c12] hover:bg-amber-600 text-white rounded-xl text-xs font-semibold shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-key"></i> የይለፍ ቃል ቀይር
+                </button>
+                <button onclick="logoutAdmin()" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-lock"></i> ዝጋ (Exit Admin)
+                </button>
+            </div>
+        </div>
+
+        <!-- Menu Grid -->
+        <div id="menuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Dynamically populated food cards -->
+        </div>
+
+        <!-- Empty State Container -->
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 text-center">
+            <div class="w-20 h-20 rounded-full bg-orange-100 dark:bg-zinc-800 text-[#d35400] flex items-center justify-center text-3xl mb-4 shadow-inner">
+                <i class="fa-solid fa-utensils"></i>
+            </div>
+            <h3 id="emptyTitle" class="text-lg font-bold text-[#2c3e50] dark:text-gray-200">ምንም የምግብ አይነት አልተገኘም</h3>
+            <p id="emptySubtitle" class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mt-1">በአሁኑ ሰዓት ምንም የተመዘገበ ምግብ የለም። የአስተዳዳሪ መግቢያን በመጠቀም አዲስ ምግቦችን ማከል ይችላሉ።</p>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#2c3e50] text-white py-6 mt-auto border-t border-[#d35400]/30 text-center">
+        <div class="max-w-7xl mx-auto px-4 text-xs text-gray-300">
+            <p>&copy; 2026 Cozy Café - Digital Menu & Review System.</p>
+        </div>
+    </footer>
+
+    <!-- Food Item Details & Commenting Modal -->
+    <div id="detailModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden">
+        <div class="modal-animate bg-white dark:bg-zinc-900 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-200 dark:border-zinc-800 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-zinc-800">
+                <h3 id="detailItemTitle" class="text-lg font-bold text-[#2c3e50] dark:text-white">የምግብ መረጃ</h3>
+                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div class="mt-4 space-y-4">
+                <!-- Large Image Preview -->
+                <div class="relative h-64 rounded-2xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
+                    <img id="detailItemImg" src="" alt="" class="w-full h-full object-cover">
+                    <span id="detailBadge" class="hidden absolute top-3 left-3 bg-[#f39c12] text-white text-xs font-bold uppercase px-3 py-1 rounded-full shadow-md">Special</span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <span id="detailCategory" class="text-xs font-semibold text-[#d35400] uppercase tracking-wider">ምግብ</span>
+                    <span id="detailPrice" class="text-lg font-extrabold text-[#d35400] bg-orange-50 dark:bg-zinc-800 px-3 py-1 rounded-xl">0 ETB</span>
+                </div>
+
+                <p id="detailDesc" class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed"></p>
+
+                <!-- Comments & Rating Section -->
+                <div class="pt-4 border-t border-gray-100 dark:border-zinc-800">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-bold text-[#2c3e50] dark:text-white flex items-center gap-2">
+                            <i class="fa-solid fa-comments text-[#f39c12]"></i> አስተያየቶችና ደረጃዎች
+                        </h4>
+                    </div>
+
+                    <!-- Add Comment Form -->
+                    <div class="bg-gray-50 dark:bg-zinc-800/60 p-3.5 rounded-xl space-y-3 mb-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300">አስተያየት ይስጡ:</span>
+                            <div class="flex items-center gap-1 text-amber-400 text-sm cursor-pointer" id="starContainer">
+                                <i class="fa-solid fa-star star-btn" onclick="selectRating(1)"></i>
+                                <i class="fa-solid fa-star star-btn text-gray-300" onclick="selectRating(2)"></i>
+                                <i class="fa-solid fa-star star-btn text-gray-300" onclick="selectRating(3)"></i>
+                                <i class="fa-solid fa-star star-btn text-gray-300" onclick="selectRating(4)"></i>
+                                <i class="fa-solid fa-star star-btn text-gray-300" onclick="selectRating(5)"></i>
+                            </div>
+                        </div>
+                        <input type="text" id="commenterName" placeholder="ስምዎ (አማራጭ)" class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#d35400]">
+                        <textarea id="commentText" rows="2" placeholder="ስለ ምግቡ አስተያየትዎን ይጻፉ..." class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#d35400] resize-none"></textarea>
+                        <button onclick="submitComment()" class="w-full py-2 bg-[#d35400] hover:bg-[#e67e22] text-white rounded-lg text-xs font-bold shadow transition">
+                            አስተያየት ላክ (Post Comment)
+                        </button>
+                    </div>
+
+                    <!-- Existing Comments List -->
+                    <div id="commentsList" class="space-y-2.5 max-h-48 overflow-y-auto pr-1">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Passcode Login Modal -->
+    <div id="adminLoginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden">
+        <div class="modal-animate bg-white dark:bg-zinc-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-200 dark:border-zinc-800 m-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-[#2c3e50] dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield text-[#d35400]"></i> የአስተዳዳሪ መግቢያ
+                </h3>
+                <button onclick="closeAdminLoginModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">የካፌ አስተዳዳሪ የይለፍ ቃልዎን ያስገቡ። (Default Passcode: <span class="font-bold text-[#d35400]">12345678</span>)</p>
+            <form onsubmit="event.preventDefault(); submitAdminPasscode();" class="space-y-4">
+                <input type="password" id="passcodeInput" placeholder="የይለፍ ቃል (Passcode)" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#d35400]">
+                <button type="submit" class="w-full py-2.5 bg-[#d35400] hover:bg-[#e67e22] text-white rounded-xl text-xs font-bold shadow transition">
+                    አረጋግጥ (Unlock Admin)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Passcode Modal -->
+    <div id="changePasscodeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden">
+        <div class="modal-animate bg-white dark:bg-zinc-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-200 dark:border-zinc-800 m-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-[#2c3e50] dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-key text-[#f39c12]"></i> የይለፍ ቃል ቀይር
+                </h3>
+                <button onclick="closeChangePasscodeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">አዲስ የይለፍ ቃል (New Passcode)</label>
+                    <input type="password" id="newPasscodeInput" placeholder="አዲስ የይለፍ ቃል ያስገቡ" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#d35400]">
+                </div>
+                <button onclick="saveNewPasscode()" class="w-full py-2.5 bg-[#2c3e50] hover:bg-[#34495e] text-white rounded-xl text-xs font-bold shadow transition">
+                    አስቀምጥ (Save Passcode)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Food Item Modal -->
+    <div id="itemModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs hidden">
+        <div class="modal-animate bg-white dark:bg-zinc-900 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 dark:border-zinc-800 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-zinc-800">
+                <h3 id="itemModalHeading" class="text-base font-bold text-[#2c3e50] dark:text-white">አዲስ የምግብ/መጠጥ አይነት ማከያ</h3>
+                <button onclick="closeItemModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="itemForm" onsubmit="handleSaveItem(event)" class="space-y-4 mt-4">
+                <input type="hidden" id="editItemId">
+                <input type="hidden" id="itemImageBase64">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">የምግብ/መጠጥ ስም (አማርኛ)</label>
+                        <input type="text" id="itemNameAm" required placeholder="ምሳሌ: ኮዚ በርገር" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#d35400]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">የምግብ/መጠጥ ስም (English)</label>
+                        <input type="text" id="itemName" placeholder="e.g. Cozy Burger" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#d35400]">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">ምድብ (Category)</label>
+                        <select id="itemCategory" required class="w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#d35400]">
+                            <option value="meals">ምግቦች (Meals)</option>
+                            <option value="hot-drinks">ትኩስ መጠጦች</option>
+                            <option value="cold-drinks">ቀዝቃዛ መጠጦች</option>
+                            <option value="desserts">መጣፍጦች (Desserts)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">ዋጋ በ ETB (Price)</label>
+                        <input type="number" step="0.01" id="itemPrice" required placeholder="350" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#d35400]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">የምግብ ፎቶ (Photo / Camera Upload)</label>
+                    <input type="file" id="itemImageFile" accept="image/*" capture="environment" onchange="handleImageUpload(event)" class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-[#d35400] hover:file:bg-orange-100 dark:file:bg-zinc-800">
+                    <div id="imagePreviewContainer" class="hidden mt-3 relative w-full h-32 rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800">
+                        <img id="imagePreview" src="" class="w-full h-full object-cover">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">አጭር መግለጫ (Description)</label>
+                    <textarea id="itemDesc" rows="3" placeholder="ስለ ምግቡ አጭር ማብራሪያ ያስገቡ..." class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[#d35400] resize-none"></textarea>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="itemIsSpecial" class="w-4 h-4 text-[#d35400] border-gray-300 rounded focus:ring-[#d35400]">
+                    <label for="itemIsSpecial" class="text-xs font-semibold text-gray-700 dark:text-gray-300">የልዩ/ስፔሻል (Special) ምግብ ባጅ ይኑረው?</label>
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2">
+                    <button type="button" onclick="closeItemModal()" class="px-4 py-2 bg-gray-200 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-semibold hover:bg-gray-300 transition">ሰርዝ (Cancel)</button>
+                    <button type="submit" class="px-5 py-2 bg-[#d35400] hover:bg-[#e67e22] text-white rounded-xl text-xs font-bold shadow transition">መዝግብ (Save Item)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#2c3e50] text-white px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 transition-all duration-300 translate-y-20 opacity-0 pointer-events-none text-xs font-semibold">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-[#f39c12]"></i>
+        <span id="toastMsg">ማስታወሻ</span>
+    </div>
+
+    <!-- Main JavaScript Logic -->
+    <script>
+        // State
+        let menuItems = [];
+        let currentCat = 'all';
+        let searchQuery = '';
+        let isAdmin = false;
+        let adminPasscode = localStorage.getItem('cozy_admin_code') || '12345678';
+        let currentLang = localStorage.getItem('cozy_lang') || 'am';
+        
+        let currentDetailItem = null;
+        let selectedRating = 5;
+
+        let clickCount = 0;
+        let clickTimer = null;
+
+        const i18n = {
+            am: {
+                title: "Cozy Café Menu",
+                subtitle: "ምርጥና ትኩስ የምግብና የመጠጥ አማራጮች",
+                langBtn: "English",
+                searchPlaceholder: "ምግብ ወይም መጠጥ ይፈልጉ...",
+                emptyTitle: "ምንም የምግብ አይነት አልተገኘም",
+                emptySubtitle: "በአሁኑ ሰዓት ምንም የተመዘገበ ምግብ የለም። የአስተዳዳሪ መግቢያን በመጠቀም አዲስ ምግቦችን ማከል ይችላሉ።"
+            },
+            en: {
+                title: "Cozy Café Menu",
+                subtitle: "Fresh & Delicious Food & Beverage Menu",
+                langBtn: "አማርኛ",
+                searchPlaceholder: "Search food or drinks...",
+                emptyTitle: "No Menu Items Found",
+                emptySubtitle: "There are currently no menu items. Login as Admin to add items from scratch."
+            }
+        };
+
+        // Initialize default mock data if empty
+        const defaultDemoItems = [
+            {
+                id: 101,
+                nameAm: "ኮዚ ስፔሻል በርገር",
+                name: "Cozy Special Burger",
+                category: "meals",
+                price: 450,
+                isSpecial: true,
+                description: "በጥራት የተዘጋጀ የበሬ ሥጋ፣ አይብ፣ ሰላጣ እና ልዩ የኮዚ ሶስ የተጨመረበት።",
+                image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
+                comments: [
+                    { id: 1, name: "አበበ", text: "በጣም ጣፋጭ በርገር ነው! ሶሱ ደስ ይላል።", rating: 5, date: "2026-03-10" },
+                    { id: 2, name: "Sara", text: "Great burger, generous portion!", rating: 5, date: "2026-03-12" }
+                ]
+            },
+            {
+                id: 102,
+                nameAm: "የኢትዮጵያ ባህላዊ ቡና",
+                name: "Ethiopian Traditional Coffee",
+                category: "hot-drinks",
+                price: 50,
+                isSpecial: true,
+                description: "በጀበና የተፈላ ትኩስና መአዛው ደስ የሚል ባህላዊ ቡና።",
+                image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80",
+                comments: [
+                    { id: 1, name: "ዮናስ", text: "ጥሩ መዓዛ ያለው ቡና ነው!", rating: 5, date: "2026-03-11" }
+                ]
+            },
+            {
+                id: 103,
+                nameAm: "ካፑቺኖ",
+                name: "Cappuccino",
+                category: "hot-drinks",
+                price: 120,
+                isSpecial: false,
+                description: "በወተት አረፋ የተሸፈነ ትኩስ ካፑቺኖ።",
+                image: "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=600&q=80",
+                comments: []
+            }
+        ];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadStoredMenu();
+            updateLanguageUI();
+        });
+
+        function loadStoredMenu() {
+            const stored = localStorage.getItem('cozy_cafe_items');
+            if (stored) {
+                try { menuItems = JSON.parse(stored); } catch(e) { menuItems = defaultDemoItems; }
+            } else {
+                menuItems = defaultDemoItems;
+                saveStoredMenu();
+            }
+            renderGrid();
+        }
+
+        function saveStoredMenu() {
+            try {
+                localStorage.setItem('cozy_cafe_items', JSON.stringify(menuItems));
+                renderGrid();
+            } catch (err) {
+                if (err.name === 'QuotaExceededError' || err.code === 22) {
+                    showToast('የማህደረ ትውስታ መጠን አልፏል!', 'error');
+                }
+            }
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('menuGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            const filtered = menuItems.filter(item => {
+                const matchesCat = currentCat === 'all' || 
+                                   (currentCat === 'special' && item.isSpecial) ||
+                                   (item.category === currentCat);
+                const nameMatch = (item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                                  (item.nameAm && item.nameAm.toLowerCase().includes(searchQuery.toLowerCase()));
+                const descMatch = item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesCat && (nameMatch || descMatch);
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            const defaultImg = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+
+            grid.innerHTML = filtered.map(item => {
+                const displayName = (currentLang === 'am' && item.nameAm) ? item.nameAm : (item.name || item.nameAm);
+                const commentsCount = item.comments ? item.comments.length : 0;
+                
+                return `
+                    <div onclick="openDetailModal('${item.id}')" class="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col relative border border-gray-100 dark:border-zinc-800 group cursor-pointer">
+                        ${item.isSpecial ? `<span class="absolute top-3 left-3 bg-[#f39c12] text-white text-[10px] font-bold uppercase px-2.5 py-1 rounded-full shadow-md tracking-wider z-10"><i class="fa-solid fa-star mr-1"></i> Special</span>` : ''}
+                        
+                        <div class="h-48 overflow-hidden relative bg-gray-100 dark:bg-zinc-800">
+                            <img src="${item.image || defaultImg}" alt="${displayName}" onerror="this.src='${defaultImg}'" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        </div>
+                        
+                        <div class="p-4 flex flex-col flex-grow">
+                            <div class="flex items-start justify-between gap-2 mb-1">
+                                <h3 class="font-bold text-sm text-[#2c3e50] dark:text-white leading-snug">${displayName}</h3>
+                                <span class="text-xs font-extrabold text-[#d35400] whitespace-nowrap bg-orange-50 dark:bg-zinc-800 px-2.5 py-1 rounded-lg">${item.price} ETB</span>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-3 flex-grow">${item.description || 'ምንም መግለጫ አልተሰጠም።'}</p>
+                            
+                            <div class="pt-2 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs text-gray-400">
+                                <span class="flex items-center gap-1"><i class="fa-solid fa-comment text-[#f39c12]"></i> ${commentsCount} አስተያየት</span>
+                                <span class="text-[#d35400] font-semibold flex items-center gap-1">ዝርዝር <i class="fa-solid fa-chevron-right text-[10px]"></i></span>
+                            </div>
+
+                            ${isAdmin ? `
+                                <div class="mt-3 pt-2 border-t border-gray-100 dark:border-zinc-800 flex justify-end gap-2" onclick="event.stopPropagation()">
+                                    <button onclick="openEditItemModal('${item.id}')" class="px-3 py-1 bg-amber-100 text-amber-700 dark:bg-zinc-800 dark:text-amber-400 rounded-lg text-xs font-semibold hover:bg-amber-200 transition">
+                                        <i class="fa-solid fa-pen"></i> ማስተካከያ
+                                    </button>
+                                    <button onclick="deleteMenuItem('${item.id}')" class="px-3 py-1 bg-red-100 text-red-700 dark:bg-zinc-800 dark:text-red-400 rounded-lg text-xs font-semibold hover:bg-red-200 transition">
+                                        <i class="fa-solid fa-trash"></i> ሰርዝ
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Secret Admin Trigger
+        function handleSecretClick() {
+            clickCount++;
+            clearTimeout(clickTimer);
+            if (clickCount >= 5) {
+                clickCount = 0;
+                openAdminLoginModal();
+            } else {
+                clickTimer = setTimeout(() => { clickCount = 0; }, 1500);
+            }
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('searchInput').value;
+            renderGrid();
+        }
+
+        function filterCategory(cat) {
+            currentCat = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.classList.add('bg-[#d35400]', 'text-white', 'border-[#d35400]');
+                    btn.classList.remove('bg-white', 'dark:bg-zinc-800', 'text-[#2c3e50]', 'dark:text-gray-200');
+                } else {
+                    btn.classList.remove('bg-[#d35400]', 'text-white', 'border-[#d35400]');
+                    btn.classList.add('bg-white', 'dark:bg-zinc-800', 'text-[#2c3e50]', 'dark:text-gray-200');
+                }
+            });
+            renderGrid();
+        }
+
+        function openDetailModal(id) {
+            const item = menuItems.find(i => i.id == id);
+            if (!item) return;
+            currentDetailItem = item;
+
+            const displayName = (currentLang === 'am' && item.nameAm) ? item.nameAm : (item.name || item.nameAm);
+            document.getElementById('detailItemTitle').textContent = displayName;
+            document.getElementById('detailItemImg').src = item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+            document.getElementById('detailPrice').textContent = `${item.price} ETB`;
+            document.getElementById('detailCategory').textContent = getCategoryLabel(item.category);
+            document.getElementById('detailDesc').textContent = item.description || 'ምንም መግለጫ አልተሰጠም።';
+
+            if (item.isSpecial) {
+                document.getElementById('detailBadge').classList.remove('hidden');
+            } else {
+                document.getElementById('detailBadge').classList.add('hidden');
+            }
+
+            selectRating(5);
+            renderComments();
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            currentDetailItem = null;
+        }
+
+        function getCategoryLabel(cat) {
+            switch(cat) {
+                case 'meals': return 'ምግብ (Meals)';
+                case 'hot-drinks': return 'ትኩስ መጠጥ (Hot Drink)';
+                case 'cold-drinks': return 'ቀዝቃዛ መጠጥ (Cold Drink)';
+                case 'desserts': return 'መጣፍጥ (Dessert)';
+                default: return 'ሌላ';
+            }
+        }
+
+        function selectRating(stars) {
+            selectedRating = stars;
+            const starBtns = document.querySelectorAll('.star-btn');
+            starBtns.forEach((star, index) => {
+                if (index < stars) {
+                    star.classList.add('text-amber-400');
+                    star.classList.remove('text-gray-300');
+                } else {
+                    star.classList.remove('text-amber-400');
+                    star.classList.add('text-gray-300');
+                }
+            });
+        }
+
+        function submitComment() {
+            if (!currentDetailItem) return;
+            const name = document.getElementById('commenterName').value.trim() || 'ተጠቃሚ (Guest)';
+            const text = document.getElementById('commentText').value.trim();
+
+            if (!text) return showToast('እባክዎ አስተያየትዎን ይጻፉ', 'error');
+
+            if (!currentDetailItem.comments) {
+                currentDetailItem.comments = [];
+            }
+
+            const newComment = {
+                id: Date.now(),
+                name: name,
+                text: text,
+                rating: selectedRating,
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            currentDetailItem.comments.unshift(newComment);
+            saveStoredMenu();
+
+            document.getElementById('commenterName').value = '';
+            document.getElementById('commentText').value = '';
+            renderComments();
+            showToast('አስተያየትዎ ተመዝግቧል');
+        }
+
+        function renderComments() {
+            const list = document.getElementById('commentsList');
+            if (!currentDetailItem || !currentDetailItem.comments || currentDetailItem.comments.length === 0) {
+                list.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">እስከ አሁን ምንም አስተያየት አልተሰጠም። የመጀመሪያው ይሁኑ!</p>`;
+                return;
+            }
+
+            list.innerHTML = currentDetailItem.comments.map(c => {
+                let starsHtml = '';
+                for (let i = 1; i <= 5; i++) {
+                    starsHtml += `<i class="fa-solid fa-star ${i <= c.rating ? 'text-amber-400' : 'text-gray-300'} text-[10px]"></i>`;
+                }
+
+                return `
+                    <div class="p-2.5 bg-gray-50 dark:bg-zinc-800 rounded-xl text-xs space-y-1">
+                        <div class="flex items-center justify-between font-bold text-[#2c3e50] dark:text-gray-200">
+                            <span>${c.name}</span>
+                            <div class="flex items-center gap-0.5">${starsHtml}</div>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-300">${c.text}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height = Math.round((height * MAX_WIDTH) / width);
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width = Math.round((width * MAX_HEIGHT) / height);
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+                    document.getElementById('itemImageBase64').value = compressedBase64;
+                    document.getElementById('imagePreview').src = compressedBase64;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function openAdminLoginModal() {
+            document.getElementById('adminLoginModal').classList.remove('hidden');
+            document.getElementById('passcodeInput').value = '';
+        }
+        function closeAdminLoginModal() { document.getElementById('adminLoginModal').classList.add('hidden'); }
+
+        function submitAdminPasscode() {
+            const val = document.getElementById('passcodeInput').value;
+            if (val === adminPasscode) {
+                isAdmin = true;
+                closeAdminLoginModal();
+                document.getElementById('adminBanner').classList.remove('hidden');
+                renderGrid();
+                showToast('አስተዳዳሪ ሆነው ገብተዋል (Admin Mode Unlocked)');
+            } else {
+                showToast('የተሳሳተ የይለፍ ቃል!', 'error');
+            }
+        }
+
+        function logoutAdmin() {
+            isAdmin = false;
+            document.getElementById('adminBanner').classList.add('hidden');
+            renderGrid();
+            showToast('ከአስተዳዳሪነት ወጥተዋል');
+        }
+
+        function openChangePasscodeModal() {
+            document.getElementById('changePasscodeModal').classList.remove('hidden');
+        }
+        function closeChangePasscodeModal() { document.getElementById('changePasscodeModal').classList.add('hidden'); }
+
+        function saveNewPasscode() {
+            const newCode = document.getElementById('newPasscodeInput').value.trim();
+            if (!newCode) return showToast('እባክዎ ትክክለኛ የይለፍ ቃል ያስገቡ', 'error');
+            adminPasscode = newCode;
+            localStorage.setItem('cozy_admin_code', adminPasscode);
+            closeChangePasscodeModal();
+            showToast('አዲስ የይለፍ ቃል ተቀምጧል');
+        }
+
+        function openAddItemModal() {
+            document.getElementById('editItemId').value = '';
+            document.getElementById('itemImageBase64').value = '';
+            document.getElementById('itemForm').reset();
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+            document.getElementById('itemModalHeading').textContent = 'አዲስ የምግብ/መጠጥ አይነት ማከያ';
+            document.getElementById('itemModal').classList.remove('hidden');
+        }
+
+        function openEditItemModal(id) {
+            const item = menuItems.find(i => i.id == id);
+            if (!item) return;
+            document.getElementById('editItemId').value = item.id;
+            document.getElementById('itemNameAm').value = item.nameAm || '';
+            document.getElementById('itemName').value = item.name || '';
+            document.getElementById('itemCategory').value = item.category;
+            document.getElementById('itemPrice').value = item.price;
+            document.getElementById('itemDesc').value = item.description || '';
+            document.getElementById('itemIsSpecial').checked = item.isSpecial || false;
+
+            if (item.image) {
+                document.getElementById('itemImageBase64').value = item.image;
+                document.getElementById('imagePreview').src = item.image;
+                document.getElementById('imagePreviewContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('imagePreviewContainer').classList.add('hidden');
+            }
+
+            document.getElementById('itemModalHeading').textContent = 'ምግብ ማስተካከያ';
+            document.getElementById('itemModal').classList.remove('hidden');
+        }
+
+        function closeItemModal() { document.getElementById('itemModal').classList.add('hidden'); }
+
+        function handleSaveItem(e) {
+            e.preventDefault();
+            const editId = document.getElementById('editItemId').value;
+            const existingItem = menuItems.find(i => i.id == editId);
+
+            const newItem = {
+                id: editId || Date.now(),
+                nameAm: document.getElementById('itemNameAm').value.trim(),
+                name: document.getElementById('itemName').value.trim(),
+                category: document.getElementById('itemCategory').value,
+                price: parseFloat(document.getElementById('itemPrice').value),
+                image: document.getElementById('itemImageBase64').value || (existingItem ? existingItem.image : ''),
+                description: document.getElementById('itemDesc').value.trim(),
+                isSpecial: document.getElementById('itemIsSpecial').checked,
+                comments: existingItem ? (existingItem.comments || []) : []
+            };
+
+            if (editId) {
+                const index = menuItems.findIndex(i => i.id == editId);
+                if (index !== -1) menuItems[index] = newItem;
+            } else {
+                menuItems.unshift(newItem);
+            }
+
+            saveStoredMenu();
+            closeItemModal();
+            showToast('የምግብ መረጃው ተቀምጧል');
+        }
+
+        function deleteMenuItem(id) {
+            if (confirm('ይህንን የምግብ አይነት መሰረዝ ይፈልጋሉ?')) {
+                menuItems = menuItems.filter(i => i.id != id);
+                saveStoredMenu();
+                showToast('የምግብ አይነት ተሰርዟል');
+            }
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'am' ? 'en' : 'am';
+            localStorage.setItem('cozy_lang', currentLang);
+            updateLanguageUI();
+            renderGrid();
+        }
+
+        function updateLanguageUI() {
+            const t = i18n[currentLang];
+            document.getElementById('brandTitle').textContent = t.title;
+            document.getElementById('brandSubtitle').textContent = t.subtitle;
+            document.getElementById('langBtnLabel').textContent = t.langBtn;
+            document.getElementById('searchInput').placeholder = t.searchPlaceholder;
+            document.getElementById('emptyTitle').textContent = t.emptyTitle;
+            document.getElementById('emptySubtitle').textContent = t.emptySubtitle;
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            document.getElementById('toastIcon').className = type === 'error' ? 'fa-solid fa-triangle-exclamation text-red-400' : 'fa-solid fa-circle-check text-[#f39c12]';
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
